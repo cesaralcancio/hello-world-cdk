@@ -1,0 +1,913 @@
+Resources:
+  bgdemotableEF843024:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-table/Resource
+  bgdemolambdaServiceRole8276B61C:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-lambda/ServiceRole/Resource
+  bgdemolambdaServiceRoleDefaultPolicyB72DEED2:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:Query
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:BatchWriteItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - bgdemotableEF843024
+                  - Arn
+              - Ref: AWS::NoValue
+        Version: "2012-10-17"
+      PolicyName: bgdemolambdaServiceRoleDefaultPolicyB72DEED2
+      Roles:
+        - Ref: bgdemolambdaServiceRole8276B61C
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-lambda/ServiceRole/DefaultPolicy/Resource
+  bgdemolambdaB35B305C:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393S3Bucket2F650E8E
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393S3VersionKey51062647
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393S3VersionKey51062647
+      Handler: handler.main
+      Role:
+        Fn::GetAtt:
+          - bgdemolambdaServiceRole8276B61C
+          - Arn
+      Runtime: python3.7
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: bgdemotableEF843024
+    DependsOn:
+      - bgdemolambdaServiceRoleDefaultPolicyB72DEED2
+      - bgdemolambdaServiceRole8276B61C
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-lambda/Resource
+      aws:asset:path: asset.381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393
+      aws:asset:property: Code
+  bgdemoapi331B21FE:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: bg-demo-api
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Resource
+  bgdemoapiCloudWatchRole922F1931:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/CloudWatchRole/Resource
+  bgdemoapiAccount18455684:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn:
+        Fn::GetAtt:
+          - bgdemoapiCloudWatchRole922F1931
+          - Arn
+    DependsOn:
+      - bgdemoapi331B21FE
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Account
+  bgdemoapiDeployment9E6EDF0B136e05f793536d4a0f5773dc8f483479:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: bgdemoapi331B21FE
+      Description: Automatically created by the RestApi construct
+    DependsOn:
+      - bgdemoapiproxyANYD21741E8
+      - bgdemoapiproxyF29617F9
+      - bgdemoapiANY0296F634
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Deployment/Resource
+  bgdemoapiDeploymentStageprodDB8618B8:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId:
+        Ref: bgdemoapi331B21FE
+      DeploymentId:
+        Ref: bgdemoapiDeployment9E6EDF0B136e05f793536d4a0f5773dc8f483479
+      StageName: prod
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/DeploymentStage.prod/Resource
+  bgdemoapiproxyF29617F9:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - bgdemoapi331B21FE
+          - RootResourceId
+      PathPart: "{proxy+}"
+      RestApiId:
+        Ref: bgdemoapi331B21FE
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Default/{proxy+}/Resource
+  bgdemoapiproxyANYApiPermissionhelloworldcdkbgdemoapiBF6CB2ABANYproxy04274DD5:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - bgdemolambdaB35B305C
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:us-west-2:519501257528:"
+            - Ref: bgdemoapi331B21FE
+            - /
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - /*/*
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Default/{proxy+}/ANY/ApiPermission.helloworldcdkbgdemoapiBF6CB2AB.ANY..{proxy+}
+  bgdemoapiproxyANYApiPermissionTesthelloworldcdkbgdemoapiBF6CB2ABANYproxy473A2C16:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - bgdemolambdaB35B305C
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:us-west-2:519501257528:"
+            - Ref: bgdemoapi331B21FE
+            - /test-invoke-stage/*/*
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Default/{proxy+}/ANY/ApiPermission.Test.helloworldcdkbgdemoapiBF6CB2AB.ANY..{proxy+}
+  bgdemoapiproxyANYD21741E8:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId:
+        Ref: bgdemoapiproxyF29617F9
+      RestApiId:
+        Ref: bgdemoapi331B21FE
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :apigateway:us-west-2:lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - bgdemolambdaB35B305C
+                  - Arn
+              - /invocations
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Default/{proxy+}/ANY/Resource
+  bgdemoapiANYApiPermissionhelloworldcdkbgdemoapiBF6CB2ABANYE1DFD45A:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - bgdemolambdaB35B305C
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:us-west-2:519501257528:"
+            - Ref: bgdemoapi331B21FE
+            - /
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - /*/
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Default/ANY/ApiPermission.helloworldcdkbgdemoapiBF6CB2AB.ANY..
+  bgdemoapiANYApiPermissionTesthelloworldcdkbgdemoapiBF6CB2ABANYB5F68104:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - bgdemolambdaB35B305C
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:us-west-2:519501257528:"
+            - Ref: bgdemoapi331B21FE
+            - /test-invoke-stage/*/
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Default/ANY/ApiPermission.Test.helloworldcdkbgdemoapiBF6CB2AB.ANY..
+  bgdemoapiANY0296F634:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: ANY
+      ResourceId:
+        Fn::GetAtt:
+          - bgdemoapi331B21FE
+          - RootResourceId
+      RestApiId:
+        Ref: bgdemoapi331B21FE
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :apigateway:us-west-2:lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - bgdemolambdaB35B305C
+                  - Arn
+              - /invocations
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-api/Default/ANY/Resource
+  bgdemovpc654AC7AD:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/Resource
+  bgdemovpcPublicSubnet1Subnet7005828B:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.0.0/19
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      AvailabilityZone: us-west-2a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PublicSubnet1
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet1/Subnet
+  bgdemovpcPublicSubnet1RouteTableEB1F17E1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PublicSubnet1
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet1/RouteTable
+  bgdemovpcPublicSubnet1RouteTableAssociation533FB244:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPublicSubnet1RouteTableEB1F17E1
+      SubnetId:
+        Ref: bgdemovpcPublicSubnet1Subnet7005828B
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet1/RouteTableAssociation
+  bgdemovpcPublicSubnet1DefaultRoute2D4CAF73:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPublicSubnet1RouteTableEB1F17E1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: bgdemovpcIGWC59068E5
+    DependsOn:
+      - bgdemovpcVPCGW4CE56C00
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet1/DefaultRoute
+  bgdemovpcPublicSubnet1NatInstanceInstanceProfile2FBE4796:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: bgdemovpcNatRole36FC5BDA
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet1/NatInstance/InstanceProfile
+  bgdemovpcPublicSubnet1NatInstance4E178118:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-west-2a
+      IamInstanceProfile:
+        Ref: bgdemovpcPublicSubnet1NatInstanceInstanceProfile2FBE4796
+      ImageId: ami-0b7fea0bbdcbe0157
+      InstanceType: t3.small
+      SecurityGroupIds:
+        - Fn::GetAtt:
+            - bgdemovpcNatSecurityGroup081EAF5A
+            - GroupId
+      SourceDestCheck: false
+      SubnetId:
+        Ref: bgdemovpcPublicSubnet1Subnet7005828B
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PublicSubnet1/NatInstance
+      UserData:
+        Fn::Base64: "#!/bin/bash"
+    DependsOn:
+      - bgdemovpcNatRole36FC5BDA
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet1/NatInstance/Resource
+  bgdemovpcPublicSubnet2Subnet60DFAF82:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.32.0/19
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      AvailabilityZone: us-west-2b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PublicSubnet2
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet2/Subnet
+  bgdemovpcPublicSubnet2RouteTable2D685501:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PublicSubnet2
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet2/RouteTable
+  bgdemovpcPublicSubnet2RouteTableAssociation73247DE7:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPublicSubnet2RouteTable2D685501
+      SubnetId:
+        Ref: bgdemovpcPublicSubnet2Subnet60DFAF82
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet2/RouteTableAssociation
+  bgdemovpcPublicSubnet2DefaultRouteA9DD6EFE:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPublicSubnet2RouteTable2D685501
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: bgdemovpcIGWC59068E5
+    DependsOn:
+      - bgdemovpcVPCGW4CE56C00
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet2/DefaultRoute
+  bgdemovpcPublicSubnet3SubnetDD29AF8B:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.64.0/19
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      AvailabilityZone: us-west-2c
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Public
+        - Key: aws-cdk:subnet-type
+          Value: Public
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PublicSubnet3
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet3/Subnet
+  bgdemovpcPublicSubnet3RouteTableD6BC99DC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PublicSubnet3
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet3/RouteTable
+  bgdemovpcPublicSubnet3RouteTableAssociationB422FD9F:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPublicSubnet3RouteTableD6BC99DC
+      SubnetId:
+        Ref: bgdemovpcPublicSubnet3SubnetDD29AF8B
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet3/RouteTableAssociation
+  bgdemovpcPublicSubnet3DefaultRoute83949343:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPublicSubnet3RouteTableD6BC99DC
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId:
+        Ref: bgdemovpcIGWC59068E5
+    DependsOn:
+      - bgdemovpcVPCGW4CE56C00
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PublicSubnet3/DefaultRoute
+  bgdemovpcPrivateSubnet1SubnetA0F961C7:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.96.0/19
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      AvailabilityZone: us-west-2a
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Private
+        - Key: aws-cdk:subnet-type
+          Value: Private
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PrivateSubnet1
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet1/Subnet
+  bgdemovpcPrivateSubnet1RouteTable0269F06D:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PrivateSubnet1
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet1/RouteTable
+  bgdemovpcPrivateSubnet1RouteTableAssociation325CA9B2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPrivateSubnet1RouteTable0269F06D
+      SubnetId:
+        Ref: bgdemovpcPrivateSubnet1SubnetA0F961C7
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet1/RouteTableAssociation
+  bgdemovpcPrivateSubnet1DefaultRoute8E5CDD22:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPrivateSubnet1RouteTable0269F06D
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId:
+        Ref: bgdemovpcPublicSubnet1NatInstance4E178118
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet1/DefaultRoute
+  bgdemovpcPrivateSubnet2Subnet78F63985:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.128.0/19
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      AvailabilityZone: us-west-2b
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Private
+        - Key: aws-cdk:subnet-type
+          Value: Private
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PrivateSubnet2
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet2/Subnet
+  bgdemovpcPrivateSubnet2RouteTableE9D31300:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PrivateSubnet2
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet2/RouteTable
+  bgdemovpcPrivateSubnet2RouteTableAssociation3E3A99D9:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPrivateSubnet2RouteTableE9D31300
+      SubnetId:
+        Ref: bgdemovpcPrivateSubnet2Subnet78F63985
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet2/RouteTableAssociation
+  bgdemovpcPrivateSubnet2DefaultRoute983F55D0:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPrivateSubnet2RouteTableE9D31300
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId:
+        Ref: bgdemovpcPublicSubnet1NatInstance4E178118
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet2/DefaultRoute
+  bgdemovpcPrivateSubnet3SubnetD9C4BD86:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.160.0/19
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      AvailabilityZone: us-west-2c
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: aws-cdk:subnet-name
+          Value: Private
+        - Key: aws-cdk:subnet-type
+          Value: Private
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PrivateSubnet3
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet3/Subnet
+  bgdemovpcPrivateSubnet3RouteTable7C9C48EE:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc/PrivateSubnet3
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet3/RouteTable
+  bgdemovpcPrivateSubnet3RouteTableAssociationA9B1B710:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPrivateSubnet3RouteTable7C9C48EE
+      SubnetId:
+        Ref: bgdemovpcPrivateSubnet3SubnetD9C4BD86
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet3/RouteTableAssociation
+  bgdemovpcPrivateSubnet3DefaultRoute6B6F43F1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId:
+        Ref: bgdemovpcPrivateSubnet3RouteTable7C9C48EE
+      DestinationCidrBlock: 0.0.0.0/0
+      InstanceId:
+        Ref: bgdemovpcPublicSubnet1NatInstance4E178118
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/PrivateSubnet3/DefaultRoute
+  bgdemovpcIGWC59068E5:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/IGW
+  bgdemovpcVPCGW4CE56C00:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+      InternetGatewayId:
+        Ref: bgdemovpcIGWC59068E5
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/VPCGW
+  bgdemovpcNatSecurityGroup081EAF5A:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for NAT instances
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic by default
+          IpProtocol: "-1"
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          Description: from 0.0.0.0/0:ALL TRAFFIC
+          IpProtocol: "-1"
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc
+      VpcId:
+        Ref: bgdemovpc654AC7AD
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/NatSecurityGroup/Resource
+  bgdemovpcNatRole36FC5BDA:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+        Version: "2012-10-17"
+      Tags:
+        - Key: Name
+          Value: hello-world-cdk/bg-demo-vpc
+    Metadata:
+      aws:cdk:path: hello-world-cdk/bg-demo-vpc/NatRole/Resource
+  urlshortenermonitorAlarmTopic8123C3D2:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Watchful Alarms
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/AlarmTopic/Resource
+  urlshortenermonitorAlarmTopicerickbarrerapayclipcom5E46C746:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn:
+        Ref: urlshortenermonitorAlarmTopic8123C3D2
+      Endpoint: erick.barrera@payclip.com
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/AlarmTopic/erick.barrera@payclip.com/Resource
+  urlshortenermonitorDashboard58862E38:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardBody:
+        Fn::Join:
+          - ""
+          - - '{"widgets":[{"type":"text","width":24,"height":2,"x":0,"y":0,"properties":{"markdown":"# hello-world-cdk/bg-demo-table\n[button:Amazon DynamoDB Console](https://console.aws.amazon.com/dynamodb/home?region=us-west-2#tables:selected='
+            - Ref: bgdemotableEF843024
+            - ;tab=overview)"}},{"type":"metric","width":12,"height":6,"x":0,"y":2,"properties":{"view":"timeSeries","title":"Read Capacity Units/1min","region":"
+            - Ref: AWS::Region
+            - '","stacked":true,"metrics":[["AWS/DynamoDB","ConsumedReadCapacityUnits","TableName","'
+            - Ref: bgdemotableEF843024
+            - '",{"label":"Consumed","period":60,"stat":"Sum"}]],"annotations":{"horizontal":[{"label":"Provisioned","value":300,"color":"#58D68D","yAxis":"left"},{"color":"#FF3333","label":"Alarm on 80%","value":240,"yAxis":"left"}]},"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":12,"y":2,"properties":{"view":"timeSeries","title":"Write Capacity Units/1min","region":"'
+            - Ref: AWS::Region
+            - '","stacked":true,"metrics":[["AWS/DynamoDB","ConsumedWriteCapacityUnits","TableName","'
+            - Ref: bgdemotableEF843024
+            - '",{"label":"Consumed","period":60,"stat":"Sum"}]],"annotations":{"horizontal":[{"label":"Provisioned","value":300,"color":"#58D68D","yAxis":"left"},{"color":"#FF3333","label":"Alarm on 80%","value":240,"yAxis":"left"}]},"yAxis":{}}},{"type":"text","width":24,"height":2,"x":0,"y":8,"properties":{"markdown":"# hello-world-cdk/bg-demo-lambda\n[button:AWS Lambda Console](https://console.aws.amazon.com/lambda/home?region=us-west-2#/functions/'
+            - Ref: bgdemolambdaB35B305C
+            - ?tab=graph) | [button:CloudWatch Logs](https://console.aws.amazon.com/cloudwatch/home?region=us-west-2#logEventViewer:group=/aws/lambda/
+            - Ref: bgdemolambdaB35B305C
+            - )"}},{"type":"metric","width":6,"height":6,"x":0,"y":10,"properties":{"view":"timeSeries","title":"Invocations/5min","region":"
+            - Ref: AWS::Region
+            - '","metrics":[["AWS/Lambda","Invocations","FunctionName","'
+            - Ref: bgdemolambdaB35B305C
+            - '",{"stat":"Sum"}]],"yAxis":{}}},{"type":"metric","width":6,"height":6,"x":6,"y":10,"properties":{"view":"timeSeries","title":"Errors/5min","region":"'
+            - Ref: AWS::Region
+            - '","metrics":[["AWS/Lambda","Errors","FunctionName","'
+            - Ref: bgdemolambdaB35B305C
+            - '",{"stat":"Sum"}]],"annotations":{"horizontal":[{"label":"Errors > 0 for 3 datapoints within 15 minutes","value":0,"yAxis":"left"}]},"yAxis":{}}},{"type":"metric","width":6,"height":6,"x":12,"y":10,"properties":{"view":"timeSeries","title":"Throttles/5min","region":"'
+            - Ref: AWS::Region
+            - '","metrics":[["AWS/Lambda","Throttles","FunctionName","'
+            - Ref: bgdemolambdaB35B305C
+            - '",{"stat":"Sum"}]],"annotations":{"horizontal":[{"label":"Throttles > 0 for 3 datapoints within 15 minutes","value":0,"yAxis":"left"}]},"yAxis":{}}},{"type":"metric","width":6,"height":6,"x":18,"y":10,"properties":{"view":"timeSeries","title":"Duration/5min","region":"'
+            - Ref: AWS::Region
+            - '","metrics":[["AWS/Lambda","Duration","FunctionName","'
+            - Ref: bgdemolambdaB35B305C
+            - '"]],"annotations":{"horizontal":[{"label":"Duration > 2000 for 3 datapoints within 15 minutes","value":2000,"yAxis":"left"}]},"yAxis":{}}},{"type":"text","width":24,"height":2,"x":0,"y":16,"properties":{"markdown":"# hello-world-cdk/bg-demo-api\n[button:Amazon API Gateway Console](https://console.aws.amazon.com/apigateway/home?region=us-west-2#/apis/'
+            - Ref: bgdemoapi331B21FE
+            - )"}},{"type":"metric","width":12,"height":6,"x":0,"y":18,"properties":{"view":"timeSeries","title":"Overall Calls/min","region":"
+            - Ref: AWS::Region
+            - '","stacked":false,"metrics":[["AWS/ApiGateway","Count","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"color":"#1f77b4","label":"Calls","period":60,"stat":"Sum"}],["AWS/ApiGateway","4XXError","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"color":"#ff7f0e","label":"HTTP 4XX","period":60,"stat":"Sum"}],["AWS/ApiGateway","5XXError","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"color":"#d62728","label":"HTTP 5XX","period":60,"stat":"Sum"}]],"annotations":{"horizontal":[{"value":1,"color":"#ff0000","label":"5XX Errors Alarm","yAxis":"left"}]},"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":12,"y":18,"properties":{"view":"timeSeries","title":"Overall Latency (1-minute periods)","region":"'
+            - Ref: AWS::Region
+            - '","stacked":false,"metrics":[["AWS/ApiGateway","Latency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"min","period":60,"stat":"Minimum"}],["AWS/ApiGateway","Latency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"avg","period":60}],["AWS/ApiGateway","Latency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"p90","period":60,"stat":"p90"}],["AWS/ApiGateway","Latency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"p99","period":60,"stat":"p99"}],["AWS/ApiGateway","Latency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"max","period":60,"stat":"Maximum"}]],"yAxis":{}}},{"type":"metric","width":12,"height":6,"x":0,"y":24,"properties":{"view":"timeSeries","title":"Overall IntegrationLatency (1-minute periods)","region":"'
+            - Ref: AWS::Region
+            - '","stacked":false,"metrics":[["AWS/ApiGateway","IntegrationLatency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"min","period":60,"stat":"Minimum"}],["AWS/ApiGateway","IntegrationLatency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"avg","period":60}],["AWS/ApiGateway","IntegrationLatency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"p90","period":60,"stat":"p90"}],["AWS/ApiGateway","IntegrationLatency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"p99","period":60,"stat":"p99"}],["AWS/ApiGateway","IntegrationLatency","ApiName","bg-demo-api","Stage","'
+            - Ref: bgdemoapiDeploymentStageprodDB8618B8
+            - '",{"label":"max","period":60,"stat":"Maximum"}]],"yAxis":{}}}]}'
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/Dashboard/Resource
+  urlshortenermonitorhelloworldcdkbgdemotableE4015BB2CapacityAlarmreadBD0C285B:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      AlarmActions:
+        - Ref: urlshortenermonitorAlarmTopic8123C3D2
+      AlarmDescription: at 1200% of read capacity
+      Dimensions:
+        - Name: TableName
+          Value:
+            Ref: bgdemotableEF843024
+      MetricName: ConsumedReadCapacityUnits
+      Namespace: AWS/DynamoDB
+      Period: 300
+      Statistic: Sum
+      Threshold: 1200
+      Unit: Count
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/helloworldcdkbgdemotableE4015BB2/CapacityAlarm:read/Resource
+  urlshortenermonitorhelloworldcdkbgdemotableE4015BB2CapacityAlarmwriteA68B9EB0:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      AlarmActions:
+        - Ref: urlshortenermonitorAlarmTopic8123C3D2
+      AlarmDescription: at 1200% of write capacity
+      Dimensions:
+        - Name: TableName
+          Value:
+            Ref: bgdemotableEF843024
+      MetricName: ConsumedWriteCapacityUnits
+      Namespace: AWS/DynamoDB
+      Period: 300
+      Statistic: Sum
+      Threshold: 1200
+      Unit: Count
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/helloworldcdkbgdemotableE4015BB2/CapacityAlarm:write/Resource
+  urlshortenermonitorhelloworldcdkbgdemolambdaB1A7FDB3ErrorsAlarm16EA1494:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 3
+      AlarmActions:
+        - Ref: urlshortenermonitorAlarmTopic8123C3D2
+      AlarmDescription: Over 0 errors per minute
+      Dimensions:
+        - Name: FunctionName
+          Value:
+            Ref: bgdemolambdaB35B305C
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 300
+      Statistic: Sum
+      Threshold: 0
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/helloworldcdkbgdemolambdaB1A7FDB3/ErrorsAlarm/Resource
+  urlshortenermonitorhelloworldcdkbgdemolambdaB1A7FDB3ThrottlesAlarmEA1B409C:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 3
+      AlarmActions:
+        - Ref: urlshortenermonitorAlarmTopic8123C3D2
+      AlarmDescription: Over 0 throttles per minute
+      Dimensions:
+        - Name: FunctionName
+          Value:
+            Ref: bgdemolambdaB35B305C
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Period: 300
+      Statistic: Sum
+      Threshold: 0
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/helloworldcdkbgdemolambdaB1A7FDB3/ThrottlesAlarm/Resource
+  urlshortenermonitorhelloworldcdkbgdemolambdaB1A7FDB3DurationAlarmF0E891BD:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 3
+      AlarmActions:
+        - Ref: urlshortenermonitorAlarmTopic8123C3D2
+      AlarmDescription: p99 latency >= 2s (80%)
+      Dimensions:
+        - Name: FunctionName
+          Value:
+            Ref: bgdemolambdaB35B305C
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Period: 300
+      Statistic: Average
+      Threshold: 2000
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/helloworldcdkbgdemolambdaB1A7FDB3/DurationAlarm/Resource
+  urlshortenermonitorhelloworldcdkbgdemoapiBF6CB2AB5XXErrorAlarmBE137179:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      AlarmActions:
+        - Ref: urlshortenermonitorAlarmTopic8123C3D2
+      AlarmDescription: at 1
+      Dimensions:
+        - Name: ApiName
+          Value: bg-demo-api
+        - Name: Stage
+          Value:
+            Ref: bgdemoapiDeploymentStageprodDB8618B8
+      MetricName: 5XXError
+      Namespace: AWS/ApiGateway
+      Period: 300
+      Statistic: Sum
+      Threshold: 1
+    Metadata:
+      aws:cdk:path: hello-world-cdk/url-shortener-monitor/helloworldcdkbgdemoapiBF6CB2AB/5XXErrorAlarm/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Modules: aws-cdk=1.51.0,@aws-cdk/assets=1.51.0,@aws-cdk/aws-apigateway=1.51.0,@aws-cdk/aws-applicationautoscaling=1.51.0,@aws-cdk/aws-autoscaling=1.51.0,@aws-cdk/aws-autoscaling-common=1.51.0,@aws-cdk/aws-autoscaling-hooktargets=1.51.0,@aws-cdk/aws-batch=1.51.0,@aws-cdk/aws-certificatemanager=1.51.0,@aws-cdk/aws-cloudformation=1.51.0,@aws-cdk/aws-cloudfront=1.51.0,@aws-cdk/aws-cloudwatch=1.51.0,@aws-cdk/aws-cloudwatch-actions=1.51.0,@aws-cdk/aws-codebuild=1.51.0,@aws-cdk/aws-codecommit=1.51.0,@aws-cdk/aws-codepipeline=1.51.0,@aws-cdk/aws-cognito=1.51.0,@aws-cdk/aws-dynamodb=1.51.0,@aws-cdk/aws-ec2=1.51.0,@aws-cdk/aws-ecr=1.51.0,@aws-cdk/aws-ecr-assets=1.51.0,@aws-cdk/aws-ecs=1.51.0,@aws-cdk/aws-efs=1.51.0,@aws-cdk/aws-elasticloadbalancing=1.51.0,@aws-cdk/aws-elasticloadbalancingv2=1.51.0,@aws-cdk/aws-events=1.51.0,@aws-cdk/aws-events-targets=1.51.0,@aws-cdk/aws-iam=1.51.0,@aws-cdk/aws-kinesis=1.51.0,@aws-cdk/aws-kms=1.51.0,@aws-cdk/aws-lambda=1.51.0,@aws-cdk/aws-logs=1.51.0,@aws-cdk/aws-route53=1.51.0,@aws-cdk/aws-route53-targets=1.51.0,@aws-cdk/aws-s3=1.51.0,@aws-cdk/aws-s3-assets=1.51.0,@aws-cdk/aws-sam=1.51.0,@aws-cdk/aws-secretsmanager=1.51.0,@aws-cdk/aws-servicediscovery=1.51.0,@aws-cdk/aws-sns=1.51.0,@aws-cdk/aws-sns-subscriptions=1.51.0,@aws-cdk/aws-sqs=1.51.0,@aws-cdk/aws-ssm=1.51.0,@aws-cdk/aws-stepfunctions=1.51.0,@aws-cdk/cloud-assembly-schema=1.51.0,@aws-cdk/core=1.51.0,@aws-cdk/custom-resources=1.51.0,@aws-cdk/cx-api=1.51.0,@aws-cdk/region-info=1.51.0,jsii-runtime=Python/3.6.8
+Parameters:
+  AssetParameters381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393S3Bucket2F650E8E:
+    Type: String
+    Description: S3 bucket for asset "381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393"
+  AssetParameters381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393S3VersionKey51062647:
+    Type: String
+    Description: S3 key for asset version "381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393"
+  AssetParameters381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393ArtifactHash21B44CAB:
+    Type: String
+    Description: Artifact hash for asset "381301b831081dcace9dab642c81332eff2d62720537e9c007177565fccdf393"
+Outputs:
+  bgdemoapiEndpoint623D28D3:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: bgdemoapi331B21FE
+          - .execute-api.us-west-2.
+          - Ref: AWS::URLSuffix
+          - /
+          - Ref: bgdemoapiDeploymentStageprodDB8618B8
+          - /
+  urlshortenermonitorWatchfulDashboard0908AAEC:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://console.aws.amazon.com/cloudwatch/home?region=us-west-2#dashboards:name=
+          - Ref: urlshortenermonitorDashboard58862E38
+
