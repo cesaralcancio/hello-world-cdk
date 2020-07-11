@@ -56,3 +56,7 @@ command.
  * `cdk docs`        open CDK documentation
 
 Enjoy!
+
+# Demo Project
+
+![Demo Project](./demo-project.png)
